@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_maps/token.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_google_maps/signIn.dart';
@@ -158,6 +159,47 @@ class MapSampleState extends State<MapSample> {
     });
   }
 
+  void _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, request to turn it on.
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try requesting permissions again.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can get the current location.
+    Position position = await Geolocator.getCurrentPosition();
+
+    // Reverse geocoding
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks.first;
+      setState(() {
+        _originController.text =
+            '${place.street}, ${place.locality}, ${place.country}';
+      });
+    }
+  }
+
   int _polygonIdCounter = 1;
 
   static final CameraPosition _kGooglePlex = CameraPosition(
@@ -261,6 +303,10 @@ class MapSampleState extends State<MapSample> {
                   },
                   seperatedBuilder: Divider(),
                   isCrossBtnShown: true,
+                ),
+                FloatingActionButton(
+                  onPressed: _getCurrentLocation,
+                  child: Icon(Icons.my_location),
                 ),
                 GooglePlaceAutoCompleteTextField(
                   googleAPIKey: 'AIzaSyDQ2c_pOSOFYSjxGMwkFvCVWKjYOM9siow',
