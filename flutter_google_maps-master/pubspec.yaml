@@ -41,6 +41,7 @@ dependencies:
   google_places_flutter: ^2.0.5
   geolocator: ^8.0.0
 
+  flutter_local_notifications: ^15.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

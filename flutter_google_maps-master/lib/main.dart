@@ -11,7 +11,7 @@ import 'package:google_places_flutter/model/prediction.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_places_flutter/google_places_flutter.dart';
-
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 void main() {
   HttpOverrides.global = new MyHttpOverrides();
   runApp(
@@ -74,6 +74,8 @@ class MapSample extends StatefulWidget {
 }
 
 class MapSampleState extends State<MapSample> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   Completer<GoogleMapController> _controller = Completer();
   TextEditingController _originController = TextEditingController();
   TextEditingController _destinationController = TextEditingController();
@@ -88,6 +90,41 @@ class MapSampleState extends State<MapSample> {
   Set<Polygon> _polygons = Set<Polygon>();
   Set<Polyline> _polylines = Set<Polyline>();
   List<LatLng> polygonLatLngs = <LatLng>[];
+//Chức năng thông báo
+Future<void> showNotification() async {
+  const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+    '1'    
+    '12', // Thay đổi thành ID kênh thông báo của bạn
+    'HutechDriver', // Thay đổi thành tên kênh thông báo của bạn
+    importance: Importance.max,
+    priority: Priority.high,
+    showWhen: false,
+    icon: '@mipmap/ic_launcher',
+  );
+
+  const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.show(
+    1, // ID thông báo, có thể đặt là một giá trị duy nhất
+    'Chuyến đi của bạn',
+    'Đặt xe thành công. Nhấn để xem chi tiết chuyến đi.',
+    platformChannelSpecifics,
+    payload: 'payload', // Dữ liệu bạn muốn gửi khi người dùng nhấn vào thông báo
+  );
+  void _initialize() {
+  final InitializationSettings initializationSettings =
+      InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'));
+
+}
+
+MyApp() {
+  _initialize();
+}
+
+}  
 //Giải mã
   Map<String, dynamic> decodedToken = json.decode(
     String.fromCharCodes(
@@ -114,6 +151,16 @@ class MapSampleState extends State<MapSample> {
     );
 
     if (response.statusCode == 200) {
+    showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Đặt xe thành công'),
+        content: Text('Chuyến đi của bạn sẽ được nhận sớm nhất có thể. Vui lòng đợi.'),
+      );
+    },
+  );
+    showNotification();
     } else {
       debugPrint("Error: ${response.statusCode}");
       debugPrint("Response body: ${response.body}");

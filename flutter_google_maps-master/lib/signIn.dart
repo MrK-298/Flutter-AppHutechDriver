@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_google_maps/forgotPassword.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_google_maps/main.dart';
+import 'package:flutter_google_maps/driver.dart';
 import 'package:flutter_google_maps/register.dart';
 import 'package:flutter_google_maps/token.dart';
 
@@ -34,10 +36,21 @@ class _LoginPageState extends State<LoginPage> {
    final Map<String, dynamic> responseData = json.decode(response.body);
   if (responseData['token'] != null) {
       TokenManager.setToken(responseData['token']);
+      Map<String, dynamic> decodedToken = json.decode(
+      String.fromCharCodes(
+      base64Url.decode(TokenManager.getToken().split('.')[1]),
+      ),
+      );
+      if(decodedToken['Role']=="Member"){
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
+      }
+      else if (decodedToken['Role']=="Driver"){
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => DriverPage()));
+      }
   } else {
-    // Xử lý trường hợp phản hồi không chứa token
+     debugPrint("Error: ${response.statusCode}");
+     debugPrint("Response body: ${response.body}");
   }
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp()));
   }  else {
   debugPrint("Error: ${response.statusCode}");
   debugPrint("Response body: ${response.body}");
@@ -115,14 +128,23 @@ class _LoginPageState extends State<LoginPage> {
                     )
                 ),
               ),
-              Container(
-                constraints: BoxConstraints.loose(Size(double.infinity, 30)),
-                alignment: AlignmentDirectional.centerEnd,
-                child: Text(
-                  'Forgot password?',
-                  style: TextStyle(fontSize: 16, color: Color(0xff606470)),
-                ),
+            GestureDetector(
+              onTap: () {
+              Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ForgotPasswordPage()),
+              );
+              },
+              child: Container(
+              constraints: BoxConstraints.loose(Size(double.infinity, 30)),
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(
+              'Forgot password?',
+              style: TextStyle(fontSize: 16, color: Color(0xff3277D8)),
               ),
+              ),
+              ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 30, 0, 40),
                 child: SizedBox(
